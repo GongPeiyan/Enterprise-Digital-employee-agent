@@ -5,6 +5,8 @@
 
 ![对话主界面](screenshots/1-chat-light.png)
 
+*对话工作台（浅色主题）：左侧是专家角色，回答下方自动标注资料出处，金额表格右对齐。深色主题见 `screenshots/2-chat-dark.png`；登录页与技能库见 `screenshots/3-login.png`、`screenshots/4-skills.png`。*
+
 ## 这是什么
 
 企业内部知识助手 + 文书助手。9 个专家角色（文档、数据、代码、图纸、采购、人事、生产、总调度）共用一套知识库，可以上传资料、沉淀问答知识、共享提示词技能。

@@ -47,7 +47,8 @@ webui/_minitest.py
 _wps_tmp.doc
 webui/_minitest.py
 
-# ---- 本机辅助脚本 ----
+# ---- 本机辅助脚本与临时目录 ----
+_uidemo/
 推送到GitHub.bat
 
 # ---- 论文等无关文件 ----

@@ -206,7 +206,7 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
 .msg .md strong{font-weight:600}
 .msg .md table{border-collapse:collapse;width:100%;margin:6px 0 12px;font-size:12.5px;
   font-variant-numeric:tabular-nums}
-.msg .md th,.msg .md td{border:1px solid var(--border-2);padding:6px 10px;text-align:left;vertical-align:top}
+.msg .md th,.msg .md td{border:1px solid var(--border-2);padding:6px 10px;text-align:left;vertical-align:top;font-variant-numeric:tabular-nums}
 .msg .md th{background:var(--bg-subtle);font-weight:600;white-space:nowrap}
 .msg .md tbody tr:nth-child(even){background:#f7f7f7}
 html[data-theme="dark"] .msg .md tbody tr:nth-child(even){background:rgba(255,255,255,.03)}
@@ -447,11 +447,20 @@ function renderMD(md) {
         return l.trim().replace(/^\||\|$/g, "").split("|").map(function (s) { return s.trim(); });
       };
       const head = cells(line);
+      // 分隔行决定列对齐：|:---|---:|:---:| → 左/右/居中（金额、数字列右对齐才对得齐小数点）
+      const align = cells(lines[i + 1]).map(function (s) {
+        const l = s.charAt(0) === ":", r = s.charAt(s.length - 1) === ":";
+        return (l && r) ? "center" : (r ? "right" : (l ? "left" : ""));
+      });
+      const tag = function (name, txt, idx) {
+        const a = align[idx] || "";
+        return "<" + name + (a ? ' style="text-align:' + a + '"' : "") + ">" + inline(txt) + "</" + name + ">";
+      };
       i += 2; const rows = [];
       while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { rows.push(cells(lines[i])); i++; }
-      out.push("<table><thead><tr>" + head.map(function (h) { return "<th>" + inline(h) + "</th>"; }).join("") +
+      out.push("<table><thead><tr>" + head.map(function (h, idx) { return tag("th", h, idx); }).join("") +
         "</tr></thead><tbody>" + rows.map(function (r) {
-          return "<tr>" + r.map(function (c) { return "<td>" + inline(c) + "</td>"; }).join("") + "</tr>";
+          return "<tr>" + r.map(function (c, idx) { return tag("td", c, idx); }).join("") + "</tr>";
         }).join("") + "</tbody></table>");
       continue;
     }
@@ -896,8 +905,8 @@ async function pollKbStatus() {
       el.className = "status err";
       el.innerHTML = '<span class="dot"></span>重建失败 · 见日志';
     } else {
-      el.innerHTML = '<span class="dot"></span>知识库 ' + d.chunks + " 块";
-      el.title = "构建时间 " + (d.built_at || "-") + "；把文档丢进 docs/ 会自动重建";
+      el.innerHTML = '<span class="dot"></span>知识库 ' + d.chunks + " 条";
+      el.title = "已收录 " + d.chunks + " 条知识片段，构建时间 " + (d.built_at || "-") + "；新增文档会自动更新";
     }
   } catch (e) {}
 }
