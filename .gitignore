@@ -1,0 +1,70 @@
+# ============================================================
+# 只上传代码。公司资料 / 个人隐私 / 密钥 / 本地环境一律不入库。
+# 注意：.gitignore 不支持行尾注释，注释必须单独占一行。
+# ============================================================
+
+# ---- 业务资料与隐私（最重要）----
+docs/
+_archive/
+数据/
+gas_dict.txt
+评估集.json
+评估集_混合.json
+评估集_新增.json
+评估集_长文本.json
+评估集_vbd论文备份.json
+
+# ---- 知识库派生文件（内容就是公司资料）----
+chunks.json
+chunks_before_dedup.json
+faiss.index
+faiss_before_dedup.index
+index_meta.json
+*.tmp
+
+# ---- 运行数据（账号、密码哈希、对话、上传文件、个人知识库）----
+webui/data/
+*.db
+*.sqlite3
+memories.json
+
+# ---- 密钥与凭据 ----
+.env
+.env.*
+_key.txt
+*.pem
+
+# ---- 日志 ----
+*.log
+
+# ---- 与真实数据强绑定的脚本（含真实工程名/人名）----
+_test_e2e_chat.py
+_diag_*.py
+_build_dict*.py
+_verify_dedup.py
+_wps_tmp.doc
+webui/_minitest.py
+_wps_tmp.doc
+webui/_minitest.py
+
+# ---- 本机辅助脚本 ----
+推送到GitHub.bat
+
+# ---- 论文等无关文件 ----
+paper_text.txt
+*.pdf
+
+# ---- Python 环境 ----
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+~$*

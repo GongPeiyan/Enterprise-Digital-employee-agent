@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>技能库 · 数字员工</title>
+<script>
+  try { document.documentElement.dataset.theme = localStorage.getItem("theme") || "light"; } catch (e) {}
+</script>
+<style>
+:root{
+  --bg:#ffffff; --bg-subtle:#fafafa; --bg-muted:#f4f4f5;
+  --fg:#171717; --fg-2:#4d4d4d; --fg-3:#7a7a7a; --fg-4:#a1a1a1;
+  --border:#ebebeb; --border-2:#e0e0e0;
+  --accent:#0a72ef; --accent-soft:#ebf5ff; --accent-fg:#0068d6;
+  --ok:#0f7b3f; --ok-soft:#e9f7ef; --danger:#c0392b;
+  --ring:0 0 0 1px rgba(0,0,0,.08);
+  --shadow-pop:0 0 0 1px rgba(0,0,0,.08),0 12px 32px -12px rgba(0,0,0,.18);
+  --r-sm:6px; --r-md:8px; --r-lg:12px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC","Noto Sans CJK SC",sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,"Sarasa Mono SC",monospace;
+}
+html[data-theme="dark"]{
+  --bg:#08090a; --bg-subtle:#0f1011; --bg-muted:#191a1b;
+  --fg:#f7f8f8; --fg-2:#d0d6e0; --fg-3:#8a8f98; --fg-4:#62666d;
+  --border:rgba(255,255,255,.09); --border-2:rgba(255,255,255,.14);
+  --accent:#4c9aff; --accent-soft:rgba(76,154,255,.14); --accent-fg:#8cc2ff;
+  --ok:#34d399; --ok-soft:rgba(52,211,153,.13); --danger:#f87171;
+  --ring:0 0 0 1px rgba(255,255,255,.09);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg-subtle);color:var(--fg);font-size:15px;line-height:1.6;
+  min-height:100vh;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer;background:none;border:none;color:inherit}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 22px;
+  background:var(--bg);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:30px;height:30px;border-radius:var(--r-md);background:var(--fg);color:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.brand-txt .name{font-size:14px;font-weight:600;line-height:1.3}
+.brand-txt .sub{font-size:11.5px;color:var(--fg-3);line-height:1.3}
+.actions{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:var(--r-sm);
+  font-size:12.5px;font-weight:500;color:var(--fg-2);background:var(--bg);box-shadow:var(--ring);
+  transition:background .12s,color .12s}
+.btn:hover{background:var(--bg-muted);color:var(--fg)}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn.ghost:hover{background:var(--bg-muted)}
+.btn.primary{background:var(--fg);color:var(--bg);box-shadow:none}
+.btn.primary:hover{opacity:.88;color:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:26px 22px 60px}
+.page-title{font-size:19px;font-weight:600;letter-spacing:-.2px}
+.page-sub{margin:6px 0 22px;font-size:12.5px;color:var(--fg-3)}
+.card{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--ring);padding:20px;margin-bottom:14px}
+.card h2{font-size:14px;font-weight:600;margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:500;color:var(--fg-2);margin-bottom:5px}
+.inp,textarea{width:100%;padding:9px 12px;border-radius:var(--r-sm);font-family:inherit;font-size:13.5px;
+  background:var(--bg);color:var(--fg);border:none;box-shadow:var(--ring);outline:none}
+.inp{height:36px}
+textarea{height:130px;resize:vertical;line-height:1.7}
+.inp:focus,textarea:focus{box-shadow:0 0 0 1px var(--accent),0 0 0 4px var(--accent-soft)}
+.field{margin-bottom:12px}
+.skill{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;
+  border-radius:var(--r-md);background:var(--bg);box-shadow:var(--ring);margin-bottom:8px;cursor:pointer;
+  transition:background .12s}
+.skill:hover{background:var(--bg-muted)}
+.skill .name{font-size:14px;font-weight:600}
+.skill .desc{font-size:12.5px;color:var(--fg-3);margin-top:2px}
+.skill .meta{font-size:11.5px;color:var(--fg-4);white-space:nowrap;font-variant-numeric:tabular-nums}
+.detail{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--shadow-pop);padding:20px;margin-bottom:14px;display:none}
+.detail h3{font-size:15px;font-weight:600}
+.detail .meta{font-size:11.5px;color:var(--fg-4);margin-top:3px}
+.prompt{margin:14px 0;padding:14px;border-radius:var(--r-md);background:var(--bg-subtle);
+  white-space:pre-wrap;font-size:13px;line-height:1.8;color:var(--fg-2);font-family:var(--mono);
+  max-height:320px;overflow:auto}
+.acts{display:flex;gap:8px}
+#msg{margin-top:12px;font-size:12.5px;min-height:18px}
+#msg.err{color:var(--danger)}
+#msg.ok{color:var(--ok)}
+.empty-tip{color:var(--fg-3);font-size:13px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">技</div>
+    <div class="brand-txt">
+      <div class="name">技能库</div>
+      <div class="sub">把好用的提问方式沉淀成技能，全公司复用</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn ghost" onclick="location.href='/chat'">返回对话</button>
+    <button class="btn ghost" onclick="logout()">退出</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="page-title">技能库</div>
+  <div class="page-sub">上传技能＝分享一段可复用的提示词；同事下载后可照着用，也能直接复制提示词。</div>
+
+  <div class="card">
+    <h2>上传技能</h2>
+    <div class="field">
+      <label for="name">技能名称</label>
+      <input class="inp" id="name" placeholder="例如：投标文件生成">
+    </div>
+    <div class="field">
+      <label for="desc">一句话描述</label>
+      <input class="inp" id="desc" placeholder="例如：根据招标参数生成技术标书">
+    </div>
+    <div class="field">
+      <label for="prompt">提示词内容</label>
+      <textarea id="prompt" placeholder="这个技能的核心指令，其他人下载后照着用"></textarea>
+    </div>
+    <button class="btn primary" style="height:34px;padding:0 16px" onclick="createSkill()">上传技能</button>
+    <p id="msg"></p>
+  </div>
+
+  <div id="detail" class="detail">
+    <h3 id="dName"></h3>
+    <div class="meta" id="dMeta"></div>
+    <div class="prompt" id="dPrompt"></div>
+    <div class="acts">
+      <a class="btn" id="dDownload" href="#" target="_blank">下载 .md</a>
+      <button class="btn ghost" onclick="copyPrompt()">复制提示词</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+if (!token) location.href = "/";
+
+function showMsg(text, ok) {
+  const m = document.getElementById("msg");
+  m.textContent = text;
+  m.className = ok ? "ok" : "err";
+}
+
+async function createSkill() {
+  const name = document.getElementById("name").value.trim();
+  const desc = document.getElementById("desc").value.trim();
+  const prompt = document.getElementById("prompt").value.trim();
+  if (!name || !prompt) return showMsg("请填写技能名称和提示词", false);
+  const r = await fetch("/api/skill/create", { method: "POST", headers: {"Content-Type":"application/json","Authorization":"Bearer "+token}, body: JSON.stringify({name, description: desc, prompt}) });
+  const res = await r.json();
+  if (res.ok) {
+    showMsg("上传成功", true);
+    document.getElementById("name").value = "";
+    document.getElementById("desc").value = "";
+    document.getElementById("prompt").value = "";
+    loadSkills();
+  } else {
+    showMsg(res.msg, false);
+  }
+}
+
+async function loadSkills() {
+  const r = await fetch("/api/skill/list", { headers: {"Authorization":"Bearer "+token} });
+  const res = await r.json();
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (!res.skills || !res.skills.length) {
+    list.innerHTML = '<p class="empty-tip">还没有技能，上传第一个吧。</p>';
+    return;
+  }
+  for (const s of res.skills) {
+    const card = document.createElement("div");
+    card.className = "skill";
+    const left = document.createElement("div");
+    const nm = document.createElement("div");
+    nm.className = "name";
+    nm.textContent = s.name;
+    const de = document.createElement("div");
+    de.className = "desc";
+    de.textContent = s.description || "（无描述）";
+    left.appendChild(nm); left.appendChild(de);
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = s.author + " · " + (s.ts || "");
+    card.appendChild(left); card.appendChild(meta);
+    card.onclick = function() { showDetail(s.id); };
+    list.appendChild(card);
+  }
+}
+
+let currentSkill = null;
+async function showDetail(id) {
+  const r = await fetch("/api/skill/" + id, { headers: {"Authorization":"Bearer "+token} });
+  const res = await r.json();
+  if (!res.ok) return;
+  currentSkill = res.skill;
+  document.getElementById("detail").style.display = "block";
+  document.getElementById("dName").textContent = res.skill.name;
+  document.getElementById("dMeta").textContent = "作者 " + res.skill.author + " · " + (res.skill.ts || "");
+  document.getElementById("dPrompt").textContent = res.skill.prompt;
+  document.getElementById("dDownload").href = "/api/skill/" + id + "/download?token=" + token;
+  document.getElementById("detail").scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+
+async function copyPrompt() {
+  if (!currentSkill) return;
+  try {
+    await navigator.clipboard.writeText(currentSkill.prompt);
+    showMsg("提示词已复制到剪贴板", true);
+  } catch (e) {
+    showMsg("复制失败，请手动选中复制", false);
+  }
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("is_admin");
+  localStorage.removeItem("emp_id");
+  location.href = "/";
+}
+
+loadSkills();
+</script>
+</body>
+</html>
