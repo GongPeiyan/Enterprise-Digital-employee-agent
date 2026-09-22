@@ -14,11 +14,20 @@
 
 全局切换：改 RETRIEVAL_STRATEGY 一处，生产 + 评估同时生效。
 """
+import threading
+
 import numpy as np
 import jieba
 
 # 全局默认检索策略
 RETRIEVAL_STRATEGY = "bm25"
+
+# 重排串行锁：cross-encoder 在部分后端（实测 Apple MPS）不是线程安全的，
+# 多线程并发调用会直接断言失败并杀掉进程——两个员工同时提问就能触发。
+# 实测代价：加锁后并发 5 个请求合计 1.06 s（平均每人等 212 ms），可接受。
+# 注意：锁只在单进程内有效；若用多进程部署，每个 worker 各自持锁，
+# 仍需保证每个进程独立的重排后端，或把重排拆成单实例服务。
+_RERANK_LOCK = threading.Lock()
 
 
 def candidate_ids(query, bm25, faiss_idx=None, embed_model=None, n=20, strategy=None):
@@ -53,10 +62,19 @@ def candidate_ids(query, bm25, faiss_idx=None, embed_model=None, n=20, strategy=
 
 
 def rerank_scores(query, texts, reranker):
-    """cross-encoder 重排打分，返回与 texts 等长的分数列表。rerank 是最大单项提升，别去掉。"""
+    """cross-encoder 重排打分，返回与 texts 等长的分数列表。rerank 是最大单项提升，别去掉。
+
+    串行化执行（见 _RERANK_LOCK）；重排本身失败时降级为中性分数（保持召回顺序不变），
+    并打印告警——宁可退化成 BM25 顺序，也不能让整个请求 500。
+    """
     if not texts:
         return []
-    return list(reranker.predict([(query, t) for t in texts]))
+    with _RERANK_LOCK:
+        try:
+            return list(reranker.predict([(query, t) for t in texts]))
+        except Exception as e:      # noqa: BLE001
+            print(f"[rerank] 失败，降级为召回顺序：{type(e).__name__}: {e}", flush=True)
+            return [0.0] * len(texts)
 
 
 def search(query, bm25, texts, reranker, faiss_idx=None, embed_model=None,

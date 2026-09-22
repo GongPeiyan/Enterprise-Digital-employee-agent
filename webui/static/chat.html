@@ -84,6 +84,8 @@ button{font-family:inherit;font-size:inherit;cursor:pointer;background:none;bord
 .agent[data-role="采采"] .avatar{background:#f7f2ea;color:#7a5a22}
 .agent[data-role="安安"] .avatar{background:#fdf0f2;color:#93374a}
 .agent[data-role="顺顺"] .avatar{background:#edf5f5;color:#2c6167}
+.agent[data-role="美美"] .avatar{background:#fbeef6;color:#8a3a72}
+.agent[data-role="谋谋"] .avatar{background:#f7f8ea;color:#5f6a1e}
 html[data-theme="dark"] .agent[data-role="管家"] .avatar{background:rgba(160,180,205,.16);color:#b9c8db}
 html[data-theme="dark"] .agent[data-role="妙妙"] .avatar{background:rgba(120,175,225,.16);color:#9dc6ea}
 html[data-theme="dark"] .agent[data-role="准准"] .avatar{background:rgba(110,200,150,.16);color:#96d6b4}
@@ -92,6 +94,8 @@ html[data-theme="dark"] .agent[data-role="图图"] .avatar{background:rgba(225,1
 html[data-theme="dark"] .agent[data-role="采采"] .avatar{background:rgba(215,185,110,.18);color:#ddc48e}
 html[data-theme="dark"] .agent[data-role="安安"] .avatar{background:rgba(235,130,150,.18);color:#eda1b1}
 html[data-theme="dark"] .agent[data-role="顺顺"] .avatar{background:rgba(120,200,205,.16);color:#9fd3d7}
+html[data-theme="dark"] .agent[data-role="美美"] .avatar{background:rgba(230,130,200,.16);color:#e8a8d5}
+html[data-theme="dark"] .agent[data-role="谋谋"] .avatar{background:rgba(190,210,110,.16);color:#cbd88f}
 
 .avatar{
   width:28px;height:28px;flex:0 0 28px;border-radius:var(--r-md);
@@ -147,6 +151,9 @@ main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
 .panel{padding:14px 22px;background:var(--bg-subtle);border-bottom:1px solid var(--border);
   font-size:13px;color:var(--fg-2)}
 .panel .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* 面板内容可能很长（花名表 200+ 行、资料列表），必须限高可滚动，
+   否则会被外层 .app 的 overflow:hidden 裁掉，看起来像「只有几条」 */
+#rosterPanel,#filePanel,#knowledgePanel{max-height:60vh;overflow-y:auto}
 .inp{
   height:32px;padding:0 10px;border-radius:var(--r-sm);background:var(--bg);color:var(--fg);
   border:none;box-shadow:var(--ring);font-size:13px;font-family:inherit;
@@ -276,12 +283,14 @@ html[data-theme="dark"] .msg .md tbody tr:nth-child(even){background:rgba(255,25
     <nav id="roleList">
       <button class="agent" data-role="管家" onclick="switchRole('管家')"><span class="avatar">管</span><span class="meta"><span class="name">管家</span><span class="desc">复杂任务拆解与调度</span></span></button>
       <button class="agent active" data-role="妙妙" onclick="switchRole('妙妙')"><span class="avatar">妙</span><span class="meta"><span class="name">妙妙</span><span class="desc">文档 · 文案 · 标书</span></span></button>
+      <button class="agent" data-role="美美" onclick="switchRole('美美')"><span class="avatar">美</span><span class="meta"><span class="name">美美</span><span class="desc">图片 · 海报 · 视频脚本</span></span></button>
       <button class="agent" data-role="准准" onclick="switchRole('准准')"><span class="avatar">准</span><span class="meta"><span class="name">准准</span><span class="desc">数据 · 报表 · 财务</span></span></button>
-      <button class="agent" data-role="码码" onclick="switchRole('码码')"><span class="avatar">码</span><span class="meta"><span class="name">码码</span><span class="desc">代码 · 测试 · 发布</span></span></button>
+      <button class="agent" data-role="安安" onclick="switchRole('安安')"><span class="avatar">安</span><span class="meta"><span class="name">安安</span><span class="desc">考勤 · 档案 · 制度答疑</span></span></button>
       <button class="agent" data-role="图图" onclick="switchRole('图图')"><span class="avatar">图</span><span class="meta"><span class="name">图图</span><span class="desc">图纸 · 工艺 · BOM</span></span></button>
       <button class="agent" data-role="采采" onclick="switchRole('采采')"><span class="avatar">采</span><span class="meta"><span class="name">采采</span><span class="desc">物料 · 成本 · 合同</span></span></button>
-      <button class="agent" data-role="安安" onclick="switchRole('安安')"><span class="avatar">安</span><span class="meta"><span class="name">安安</span><span class="desc">考勤 · 档案 · 制度答疑</span></span></button>
+      <button class="agent" data-role="谋谋" onclick="switchRole('谋谋')"><span class="avatar">谋</span><span class="meta"><span class="name">谋谋</span><span class="desc">投标 · 竞品 · 策划</span></span></button>
       <button class="agent" data-role="顺顺" onclick="switchRole('顺顺')"><span class="avatar">顺</span><span class="meta"><span class="name">顺顺</span><span class="desc">生产计划 · 工时</span></span></button>
+      <button class="agent" data-role="码码" onclick="switchRole('码码')"><span class="avatar">码</span><span class="meta"><span class="name">码码</span><span class="desc">代码 · 测试 · 发布</span></span></button>
     </nav>
     <div class="sidebar-foot">
       <div class="user-chip">
@@ -291,6 +300,7 @@ html[data-theme="dark"] .msg .md tbody tr:nth-child(even){background:rgba(255,25
           <div class="desc" id="userRole">数字员工工作台</div>
         </div>
       </div>
+      <button class="btn ghost" onclick="changePwd()">改密码</button>
       <button class="btn ghost" onclick="logout()">退出</button>
     </div>
   </aside>
@@ -307,8 +317,9 @@ html[data-theme="dark"] .msg .md tbody tr:nth-child(even){background:rgba(255,25
         <span class="sep"></span>
         <button class="btn" onclick="toggleFiles()" title="上传与查看个人文件">资料</button>
         <button class="btn" id="rosterBtn" style="display:none" onclick="toggleRoster()" title="管理员工工号">花名表</button>
+        <button class="btn" id="auditBtn" style="display:none" onclick="toggleAudit()" title="问答审计：谁在什么时候问了什么、引用了哪些资料、是否被拒答">问答审计</button>
         <button class="btn" id="knowledgeBtn" style="display:none" onclick="toggleKnowledge()" title="审核沉淀的知识">知识审核</button>
-        <button class="btn" onclick="location.href='/skills'" title="共享提示词技能">技能库</button>
+        <button class="btn" onclick="location.href='/skills?v=' + V" title="共享提示词技能">技能库</button>
         <span class="sep"></span>
         <button class="btn ghost" onclick="rebuildIndex()" title="docs 目录有变化会自动重建，这里可手动触发">重建索引</button>
         <button class="btn icon" id="themeBtn" onclick="toggleTheme()" title="切换深浅色">◑</button>
@@ -325,12 +336,50 @@ html[data-theme="dark"] .msg .md tbody tr:nth-child(even){background:rgba(255,25
       <div id="fileList"></div>
     </div>
 
+    <div id="auditPanel" class="panel" style="display:none">
+      <div class="row" style="margin-bottom:8px">
+        <select class="inp" id="auditDays" style="width:110px" onchange="loadAudit()">
+          <option value="1">今天起</option>
+          <option value="7" selected>近 7 天</option>
+          <option value="30">近 30 天</option>
+        </select>
+        <input class="inp" id="auditEmp" placeholder="按工号筛选（留空=全部）" style="flex:1;min-width:160px"
+               onkeydown="if(event.key==='Enter') loadAudit()">
+        <label style="font-size:12px;white-space:nowrap"><input type="checkbox" id="auditRefusedOnly"
+               onchange="loadAudit()"> 只看拒答</label>
+        <button class="btn ghost" onclick="loadAudit()">刷新</button>
+      </div>
+      <div id="auditStats" style="margin-bottom:8px;color:var(--fg-2)"></div>
+      <div id="auditList"></div>
+    </div>
+
     <div id="rosterPanel" class="panel" style="display:none">
       <div class="row" style="margin-bottom:10px">
         <input class="inp" id="newId" placeholder="工号（如 005）" style="flex:1;min-width:120px">
-        <input class="inp" id="newName" placeholder="姓名" style="flex:1;min-width:120px">
+        <input class="inp" id="newName" placeholder="姓名" style="flex:1;min-width:100px">
+        <input class="inp" id="newDept" placeholder="部门（如 工程部）" list="deptList" style="flex:1;min-width:130px">
+        <datalist id="deptList">
+          <option>工程部</option><option>品技部</option><option>财务部</option>
+          <option>人力资源</option><option>供应链采购部</option><option>研发部</option>
+          <option>市场部</option><option>总经办</option>
+        </datalist>
+        <input class="inp" id="newTitle" placeholder="职位（如 项目工程师）" style="flex:1;min-width:140px">
+        <label style="font-size:12px;white-space:nowrap"><input type="checkbox" id="newLeader"> 部门负责人</label>
         <button class="btn" onclick="rosterAdd()">添加</button>
       </div>
+      <div class="row" style="margin-bottom:8px">
+        <input class="inp" id="rosterSearch" placeholder="搜索：工号 / 姓名 / 部门 / 职位（输入即筛选）"
+               style="flex:1;min-width:180px" oninput="renderRoster()">
+        <select class="inp" id="rosterFilter" style="width:110px" onchange="renderRoster()">
+          <option value="all">全部状态</option>
+          <option value="unreg">待注册</option>
+          <option value="reg">已注册</option>
+          <option value="dis">已停用</option>
+        </select>
+        <button class="btn ghost" onclick="clearRosterSearch()">清空</button>
+        <button class="btn" id="recalcBtn" onclick="recalcAcl()" title="名册变更后必须重算，权限才会生效">重算权限</button>
+      </div>
+      <div id="rosterSummary" style="margin-bottom:6px;color:var(--fg-2);position:sticky;top:0;background:var(--bg-subtle);z-index:2;padding:2px 0"></div>
       <div id="rosterList"></div>
     </div>
 
@@ -362,20 +411,23 @@ html[data-theme="dark"] .msg .md tbody tr:nth-child(even){background:rgba(255,25
 </div>
 
 <script>
+const V = "__BUILD__";   // 页面版本号（服务端注入）：跳转都带上，避免浏览器用缓存里的旧页面
 const token = localStorage.getItem("token");
-if (!token) location.href = "/";
+if (!token) location.href = "/?v=" + V;
 
 let currentRole = "妙妙";
 
 const ROLE_DESC = {
   "管家": "把复杂需求拆成子任务，分派给合适的专家并汇总",
   "妙妙": "文档、文案、标书与会议纪要",
+  "美美": "配图美化、海报提示词与视频脚本",
   "准准": "数据统计、报表与财务核算",
-  "码码": "代码检视、测试用例与发布",
+  "安安": "考勤、档案、入职与制度答疑",
   "图图": "图纸审阅、工艺文档与 BOM",
   "采采": "物料交期、成本核实与合同评审",
-  "安安": "考勤、档案、入职与制度答疑",
-  "顺顺": "生产计划、物料需求与工时统计"
+  "谋谋": "投标应答、竞品调研与营销策划",
+  "顺顺": "生产计划、物料需求与工时统计",
+  "码码": "代码检视、测试用例与发布辅助"
 };
 
 // 侧栏显示当前登录工号
@@ -510,7 +562,7 @@ function renderMD(md) {
 async function loadHistory() {
   try {
     const r = await fetch("/api/history", { headers: { "Authorization": "Bearer " + token } });
-    if (r.status === 401) { location.href = "/"; return; }
+    if (r.status === 401) { forceRelogin(); return; }
     const res = await r.json();
     if (res.ok && res.history) {
       for (const m of res.history) {
@@ -624,7 +676,7 @@ async function send() {
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({ message: q, role: role })
     });
-    if (r.status === 401) { location.href = "/"; return; }
+    if (r.status === 401) { forceRelogin(); return; }
 
     const reader = r.body.getReader();
     const decoder = new TextDecoder();
@@ -757,6 +809,7 @@ async function loadFiles() {
 // 管理员才显示"花名表""知识审核"
 if (localStorage.getItem("is_admin") === "1") {
   document.getElementById("rosterBtn").style.display = "inline-flex";
+  const _ab = document.getElementById("auditBtn"); if (_ab) _ab.style.display = "inline-flex";
   document.getElementById("knowledgeBtn").style.display = "inline-flex";
 }
 
@@ -823,47 +876,257 @@ function toggleRoster() {
 }
 
 async function rosterAdd() {
-  const id = document.getElementById("newId").value.trim();
+  const emp_id = document.getElementById("newId").value.trim();
   const name = document.getElementById("newName").value.trim();
-  if (!id || !name) return;
-  const r = await fetch("/api/roster/add", { method: "POST", headers: {"Content-Type":"application/json","Authorization":"Bearer "+token}, body: JSON.stringify({emp_id:id, name:name}) });
-  const res = await r.json();
-  if (res.ok) { document.getElementById("newId").value=""; document.getElementById("newName").value=""; loadRoster(); }
+  const dept = document.getElementById("newDept").value.trim();
+  const title = document.getElementById("newTitle").value.trim();
+  const is_leader = document.getElementById("newLeader").checked;
+  if (!emp_id || !name) return alert("工号和姓名不能为空");
+  if (!dept) return alert("请填部门：权限是按部门/岗位算的，不填部门他将看不到任何资料");
+  const res = await fetch("/api/roster/add", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ emp_id: emp_id, name: name, dept: dept, title: title, is_leader: is_leader })
+  }).then(x => x.json()).catch(e => ({ ok: false, msg: "网络错误：" + e }));
+  if (!res.ok) return alert(res.msg || "添加失败");
+  document.getElementById("newId").value = "";
+  document.getElementById("newName").value = "";
+  document.getElementById("newTitle").value = "";
+  document.getElementById("newLeader").checked = false;
+  aclDirty = true; markAclDirty();
+  loadRoster();
+  alert("已加入名册。\n别忘了点「重算权限」——在那之前，这位新同事登录后看不到任何资料。");
 }
 
-async function rosterRemove(id) {
-  const r = await fetch("/api/roster/remove", { method: "POST", headers: {"Content-Type":"application/json","Authorization":"Bearer "+token}, body: JSON.stringify({emp_id:id}) });
-  const res = await r.json();
-  if (res.ok) loadRoster();
+async function rosterRemove(emp_id, name, registered) {
+  // 措辞很重要：这不是「删除这个人」，只是把他移出花名表（在册名单）。
+  let msg = "移出名册：" + emp_id + " " + name + "？\n\n";
+  if (registered) {
+    msg += "注意：该员工已有账号，移出名册不影响他登录（账号和密码都还在）。\n" +
+           "如果你是要让他登不进来（例如离职），请改用「停用」。\n\n确定仍要移出吗？";
+  } else {
+    msg += "该员工还没有账号，移出名册后他将无法再自行注册。\n\n确定移出吗？";
+  }
+  if (!confirm(msg)) return;
+  const r = await fetch("/api/roster/remove", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ emp_id: emp_id })
+  }).then(x => x.json()).catch(e => ({ ok: false, msg: "网络错误：" + e }));
+  if (r.ok) { aclDirty = true; markAclDirty(); loadRoster(); } else alert(r.msg || "操作失败");
+}
+
+// 花名表数据缓存 + 过滤状态（搜索/筛选都在这份数据上做，不再重新请求）
+let rosterData = [], rosterDisabledBusy = false;
+let aclDirty = false;      // 名册有变更但还没重算权限 → 按钮高亮提醒
+
+async function recalcAcl() {
+  const btn = document.getElementById("recalcBtn");
+  btn.disabled = true; const old = btn.textContent; btn.textContent = "重算中…";
+  const r = await fetch("/api/admin/recalc_acl", { method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: "{}" }).then(x => x.json()).catch(e => ({ ok: false, msg: "网络错误：" + e }));
+  btn.disabled = false; btn.textContent = old;
+  if (!r.ok) return alert(r.msg || "重算失败");
+  aclDirty = false; markAclDirty();
+  alert(r.msg + "\n\n" + (r.summary || ""));
+}
+
+function markAclDirty() {
+  const btn = document.getElementById("recalcBtn");
+  if (!btn) return;
+  btn.textContent = aclDirty ? "重算权限（有变更）" : "重算权限";
+  btn.style.background = aclDirty ? "#c0392b" : "";
+  btn.style.color = aclDirty ? "#fff" : "";
+  btn.style.borderColor = aclDirty ? "#c0392b" : "";
+}
+
+// 改部门/职位/负责人（转部门、升职都走这里）
+async function adminEditRoster(emp_id, name, dept, title, is_leader) {
+  const d = prompt("修改 " + emp_id + " " + name + " 的部门（影响他能看到哪些资料）：", dept || "");
+  if (d === null) return;
+  const t = prompt("职位：", title || "");
+  if (t === null) return;
+  const l = confirm("是否设为「" + (d || "该部门") + "」负责人？\n（确定=负责人，取消=普通员工）");
+  const r = await fetch("/api/roster/update", { method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ emp_id: emp_id, dept: d, title: t, is_leader: l })
+  }).then(x => x.json()).catch(e => ({ ok: false, msg: "网络错误：" + e }));
+  if (!r.ok) return alert(r.msg || "保存失败");
+  aclDirty = true; markAclDirty(); loadRoster();
+}
+
+function toggleAudit() {
+  const p = document.getElementById("auditPanel");
+  const show = p.style.display !== "block";
+  p.style.display = show ? "block" : "none";
+  if (show) {
+    const rp = document.getElementById("rosterPanel");
+    if (rp) rp.style.display = "none";
+    loadAudit();
+  }
+}
+
+async function loadAudit() {
+  const days = document.getElementById("auditDays").value;
+  const emp = document.getElementById("auditEmp").value.trim();
+  const onlyRef = document.getElementById("auditRefusedOnly").checked;
+  const H = { "Authorization": "Bearer " + token };
+  const st = await fetch("/api/admin/audit_stats?days=" + days, { headers: H }).then(r => r.json()).catch(() => ({}));
+  const box = document.getElementById("auditStats");
+  if (st.ok) {
+    const bc = (st.blocked_cats || []).map(x => x[0] + "×" + x[1]).join("、") || "无";
+    const tl = (st.tools || []).map(x => x[0] + "×" + x[1]).join("、") || "无";
+    box.innerHTML = "共 <b>" + st.total + "</b> 次问答 ｜ 拒答 <b>" + st.refused + "</b> 次（" + st.refused_rate +
+      "%） ｜ 耗时 P50 " + (st.latency_p50 ?? "-") + " ms / P95 " + (st.latency_p95 ?? "-") + " ms" +
+      "<br>被权限挡下最多的类别：" + bc + " ｜ 工具调用：" + tl;
+  } else box.textContent = st.msg || "统计读取失败";
+  let url = "/api/admin/audit?days=" + days + "&limit=100&emp_id=" + encodeURIComponent(emp);
+  if (onlyRef) url += "&refused=1";
+  const d = await fetch(url, { headers: H }).then(r => r.json()).catch(() => ({}));
+  const list = document.getElementById("auditList");
+  if (!d.ok || !d.rows || !d.rows.length) { list.innerHTML = '<span class="empty-tip">暂无记录</span>'; return; }
+  list.innerHTML = "";
+  for (const r of d.rows) {
+    const div = document.createElement("div");
+    div.className = "roster-row";
+    div.style.alignItems = "flex-start";
+    const left = document.createElement("span");
+    left.style.flex = "1";
+    const tag = r.refused ? '<span style="background:#fdecea;color:#c0392b;font-size:12px;padding:1px 6px;border-radius:9px">拒答</span>'
+                          : '<span style="background:#e8f5e9;color:#2e7d32;font-size:12px;padding:1px 6px;border-radius:9px">作答</span>';
+    left.innerHTML = '<span class="id">' + r.ts + '</span> ' + r.emp_id + ' [' + r.role + '] ' + tag +
+      '<br><span style="opacity:.85">问：' + esc(r.question) + '</span>' +
+      '<br><span style="opacity:.6;font-size:12px">召回 ' + (r.n_cand ?? "-") + " 条 ｜ 挡下 " + (r.n_blocked ?? 0) +
+      " 条" + (r.blocked_cats ? "（" + r.blocked_cats + "）" : "") + " ｜ 耗时 " + (r.latency_ms ?? "-") + " ms" +
+      (r.tools && r.tools !== "[]" ? " ｜ 工具 " + r.tools : "") + "</span>" +
+      '<br><span style="opacity:.75;font-size:12px">答：' + esc((r.answer || "").slice(0, 160)) + '</span>';
+    div.appendChild(left);
+    list.appendChild(div);
+  }
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
 }
 
 async function loadRoster() {
   const r = await fetch("/api/roster/list", { headers: {"Authorization":"Bearer "+token} });
   const res = await r.json();
+  rosterData = res.roster || [];
+  renderRoster();
+}
+
+function clearRosterSearch() {
+  document.getElementById("rosterSearch").value = "";
+  document.getElementById("rosterFilter").value = "all";
+  renderRoster();
+}
+
+function renderRoster() {
   const list = document.getElementById("rosterList");
+  const q = (document.getElementById("rosterSearch").value || "").trim().toLowerCase();
+  const flt = document.getElementById("rosterFilter").value;
+  // 多关键词空格分隔：支持"工程 经理"这种组合查找
+  const words = q.split(/\s+/).filter(x => x);
+  const hit = (row) => {
+    const blob = [row.emp_id, row.name, row.dept, row.title, row.is_leader ? "负责人" : ""]
+      .join(" ").toLowerCase();
+    return words.every(w => blob.indexOf(w) >= 0);
+  };
+  const stHit = (row) => flt === "all" ? true
+    : flt === "dis" ? !!row.disabled
+    : flt === "reg" ? (!!row.registered && !row.disabled)
+    : (!!row.disabled ? false : !row.registered);      // unreg：待注册（不含已停用）
+  const shown = rosterData.filter(row => hit(row) && stHit(row));
+
+  // 顶部统计：总数 / 已注册 / 待注册（+ 过滤时显示匹配数）
+  const reg = rosterData.filter(x => x.registered).length;
+  const dis = rosterData.filter(x => x.disabled).length;
+  const sum = document.getElementById("rosterSummary");
+  if (sum) sum.textContent = "共 " + rosterData.length + " 人 ｜ 已注册 " + reg +
+    " ｜ 待注册 " + (rosterData.length - reg) + (dis ? " ｜ 已停用 " + dis : "") +
+    (words.length || flt !== "all" ? "　→　匹配 " + shown.length + " 人" : "");
+
   list.innerHTML = "";
-  if (res.roster && res.roster.length) {
-    for (const row of res.roster) {
-      const div = document.createElement("div");
-      div.className = "roster-row";
-      const span = document.createElement("span");
-      const idSpan = document.createElement("span");
-      idSpan.className = "id";
-      idSpan.textContent = row.emp_id;
-      span.appendChild(idSpan);
-      span.appendChild(document.createTextNode(row.name));
-      const btn = document.createElement("button");
-      btn.className = "btn ghost";
-      btn.style.color = "var(--danger)";
-      btn.textContent = "删除";
-      btn.onclick = function() { rosterRemove(row.emp_id); };
-      div.appendChild(span);
-      div.appendChild(btn);
-      list.appendChild(div);
+  for (const row of shown) {
+    const div = document.createElement("div");
+    div.className = "roster-row";
+    const span = document.createElement("span");
+    const idSpan = document.createElement("span");
+    idSpan.className = "id";
+    idSpan.textContent = row.emp_id;
+    span.appendChild(idSpan);
+    span.appendChild(document.createTextNode(row.name));
+    // 注册状态标签：已停用 > 已注册 > 待注册
+    const st = document.createElement("span");
+    if (row.disabled) { st.textContent = "已停用"; st.style.background = "#fdecea"; st.style.color = "#c0392b"; }
+    else if (row.registered) { st.textContent = "已注册"; st.style.background = "#e8f5e9"; st.style.color = "#2e7d32"; }
+    else { st.textContent = "待注册"; st.style.background = "#eeeeee"; st.style.color = "#777777"; }
+    st.style.fontSize = "12px"; st.style.padding = "1px 7px"; st.style.borderRadius = "9px";
+    st.style.marginLeft = "6px"; st.style.whiteSpace = "nowrap";
+    span.appendChild(st);
+    if (row.dept || row.title) {
+      const dep = document.createElement("span");
+      dep.textContent = (row.dept || "") + (row.title ? " · " + row.title : "") + (row.is_leader ? "（负责人）" : "");
+      dep.style.fontSize = "12px"; dep.style.marginLeft = "8px"; dep.style.opacity = "0.7";
+      span.appendChild(dep);
     }
-  } else {
-    list.innerHTML = '<span class="empty-tip">花名表为空</span>';
+    const btns = document.createElement("span");
+    const btnEdit = document.createElement("button");
+    btnEdit.className = "btn ghost";
+    btnEdit.textContent = "编辑";
+    btnEdit.onclick = function() { adminEditRoster(row.emp_id, row.name, row.dept, row.title, row.is_leader); };
+    const btnDis = document.createElement("button");
+    btnDis.className = "btn ghost";
+    btnDis.textContent = row.disabled ? "启用" : "停用";
+    if (!row.disabled) btnDis.style.color = "var(--danger)";
+    btnDis.onclick = function() { adminToggleAccount(row.emp_id, row.name, !row.disabled); };
+    const btnPwd = document.createElement("button");
+    btnPwd.className = "btn ghost";
+    btnPwd.textContent = "重置密码";
+    btnPwd.onclick = function() { adminResetPwd(row.emp_id, row.name); };
+    const btn = document.createElement("button");
+    btn.className = "btn ghost";
+    btn.style.color = "var(--danger)";
+    btn.textContent = "移出名册";
+    btn.onclick = function() { rosterRemove(row.emp_id, row.name, row.registered); };
+    btns.appendChild(btnEdit);
+    btns.appendChild(btnDis);
+    btns.appendChild(btnPwd);
+    btns.appendChild(btn);
+    div.appendChild(span);
+    div.appendChild(btns);
+    list.appendChild(div);
   }
+  if (!shown.length) {
+    list.innerHTML = '<span class="empty-tip">' +
+      (rosterData.length ? "没有匹配的员工（换个关键词或点「清空」）" : "花名表为空") + '</span>';
+  }
+}
+
+async function adminToggleAccount(emp_id, name, disabled) {
+  const word = disabled ? "停用" : "启用";
+  if (!confirm("确定" + word + " " + emp_id + " " + name + " 的账号？\n停用后该员工无法登录（账号与密码保留，可随时启用）。")) return;
+  const r = await fetch("/api/admin/toggle_account", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ emp_id: emp_id, disabled: disabled })
+  }).then(x => x.json()).catch(e => ({ ok: false, msg: "网络错误：" + e }));
+  alert(r.msg || (r.ok ? word + "成功" : word + "失败"));
+  if (r.ok) loadRoster();
+}
+
+async function adminResetPwd(emp_id, name) {
+  if (!confirm("确定重置 " + emp_id + " " + name + " 的密码？\n重置后该员工当前的登录会立即失效。")) return;
+  const r = await fetch("/api/admin/reset_password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ emp_id: emp_id })
+  }).then(x => x.json()).catch(e => ({ ok: false, msg: "网络错误：" + e }));
+  if (!r.ok) return alert(r.msg || "重置失败");
+  // 密码只显示这一次：用 prompt 展示，方便复制
+  prompt("新密码（只显示这一次，请复制发给 " + emp_id + " " + name + "）：", r.new_password);
 }
 
 async function saveDoc(content) {
@@ -924,11 +1187,40 @@ async function rebuildIndex() {
 setInterval(pollKbStatus, 5000);
 pollKbStatus();
 
+/* 凭证失效时，必须先把本地 token 清掉再回登录页。
+   否则登录页看到残留 token 会立刻跳回 /chat，又 401，又跳回 —— 页面就会不停切换。 */
+function forceRelogin() {
+  try {
+    localStorage.removeItem("token");
+    localStorage.removeItem("is_admin");
+    localStorage.removeItem("emp_id");
+  } catch (e) {}
+  location.href = "/?v=" + V;
+}
+
+async function changePwd() {
+  // 三步输入用浏览器原生弹窗，避免改动页面版式；后续可换成正式弹窗
+  const oldp = prompt("请输入原密码：");
+  if (!oldp) return;
+  const np = prompt("请输入新密码（至少 8 位）：");
+  if (!np) return;
+  if (np.length < 8) return alert("新密码至少 8 位");
+  const np2 = prompt("请再输一次新密码：");
+  if (np2 !== np) return alert("两次输入不一致，请重来");
+  const res = await fetch("/api/password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ old_password: oldp, new_password: np })
+  }).then(r => r.json()).catch(e => ({ ok: false, msg: "网络错误：" + e }));
+  alert(res.msg || (res.ok ? "密码已修改" : "修改失败"));
+}
+
 function logout() {
+  try { fetch("/api/logout", { method: "POST", headers: { "Authorization": "Bearer " + token } }); } catch (e) {}
   localStorage.removeItem("token");
   localStorage.removeItem("is_admin");
   localStorage.removeItem("emp_id");
-  location.href = "/";
+  location.href = "/?v=" + V;
 }
 </script>
 </body>

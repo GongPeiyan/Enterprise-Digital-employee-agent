@@ -79,7 +79,7 @@ input:focus{box-shadow:0 0 0 1px var(--accent),0 0 0 4px var(--accent-soft)}
     </div>
 
     <h1>登录工作台</h1>
-    <p class="sub">使用工号与密码登录。工号需已由管理员录入花名表。</p>
+    <p class="sub">使用工号与密码登录（初始密码由管理员发放）。尚未开户的同事可点下方「注册新账号」自助创建。</p>
 
     <div class="field">
       <label for="emp_id">工号</label>
@@ -87,23 +87,46 @@ input:focus{box-shadow:0 0 0 1px var(--accent),0 0 0 4px var(--accent-soft)}
     </div>
     <div class="field">
       <label for="password">密码</label>
-      <input id="password" type="password" placeholder="请输入密码" autocomplete="current-password">
+      <input id="password" type="password" placeholder="请输入密码（注册时至少 8 位）" autocomplete="current-password">
+    </div>
+    <div class="field" id="nameRow" style="display:none">
+      <label for="name">姓名</label>
+      <input id="name" placeholder="请填写本人姓名（与公司花名表一致）">
     </div>
 
     <button class="btn primary" id="loginBtn" onclick="doLogin()">登录</button>
     <p id="msg"></p>
-    <div class="alt">首次使用？<a href="javascript:void(0)" id="regBtn" onclick="doRegister()">注册新账号</a></div>
+    <div class="field" id="pwdRow" style="display:none">
+      <label for="new_password">新密码</label>
+      <input id="new_password" type="password" placeholder="新密码（至少 8 位）">
+    </div>
+    <div class="alt">忘记密码？<a href="javascript:void(0)" id="pwdBtn" onclick="togglePwd()">修改密码</a></div>
+    <div class="alt">首次使用？<a href="javascript:void(0)" id="regBtn" onclick="toggleRegister()">注册新账号</a></div>
   </div>
 
   <div class="foot">
     <div>企业内部系统 · 数字员工工作台</div>
-    <div>忘记密码请联系管理员重置</div>
+    <div>忘记密码可自助修改，或联系管理员重置</div>
   </div>
 </div>
 
 <script>
-const token = localStorage.getItem("token");
-if (token) location.href = "/chat";
+const V = "__BUILD__";   // 页面版本号（服务端注入），跳转时带上，避免浏览器用缓存里的旧页面
+
+/* 本地 token 可能已失效（服务重启过、或超过有效期）。
+   以前这里直接跳 /chat：聊天页拿到 401 又跳回来，于是两页无限来回闪。
+   现在先向服务端问一次 /api/me，有效才进工作台；无效就地清除，停在登录页。 */
+(async function () {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  try {
+    const r = await fetch("/api/me", { headers: { "Authorization": "Bearer " + token } });
+    if (r.ok) { location.href = "/chat?v=" + V; return; }
+  } catch (e) { /* 服务没起来，留在登录页 */ }
+  localStorage.removeItem("token");
+  localStorage.removeItem("is_admin");
+  localStorage.removeItem("emp_id");
+})();
 
 async function post(url, data) {
   const r = await fetch(url, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(data) });
@@ -130,7 +153,7 @@ async function doLogin() {
       localStorage.setItem("token", res.token);
       localStorage.setItem("is_admin", res.is_admin ? "1" : "0");
       localStorage.setItem("emp_id", emp_id);
-      location.href = "/chat";
+      location.href = "/chat?v=" + V;
     } else {
       showMsg(res.msg || "登录失败", false);
     }
@@ -141,12 +164,71 @@ async function doLogin() {
   }
 }
 
+let pwdStep = 0;   // 0=未开始改密码，1=已展开新密码栏待确认
+let regStep = 0;   // 0=未开始注册，1=已展开姓名栏待确认
+
+function togglePwd() {
+  const row = document.getElementById("pwdRow");
+  const btn = document.getElementById("pwdBtn");
+  if (pwdStep === 0) {
+    row.style.display = "";
+    btn.textContent = "确认修改";
+    document.getElementById("new_password").focus();
+    showMsg("请填写工号、原密码与新密码后再次点击「确认修改」", true);
+    pwdStep = 1;
+  } else {
+    doChangePwd();
+  }
+}
+
+async function doChangePwd() {
+  const emp_id = document.getElementById("emp_id").value.trim();
+  const oldp = document.getElementById("password").value;
+  const np = document.getElementById("new_password").value;
+  if (!emp_id || !oldp || !np) return showMsg("工号、原密码、新密码都要填", false);
+  if (np.length < 8) return showMsg("新密码至少 8 位", false);
+  const res = await post("/api/password", { emp_id, old_password: oldp, new_password: np });
+  showMsg(res.msg || (res.ok ? "密码已修改" : "修改失败"), res.ok);
+  if (res.ok) {
+    document.getElementById("pwdRow").style.display = "none";
+    document.getElementById("pwdBtn").textContent = "修改密码";
+    document.getElementById("password").value = "";
+    document.getElementById("new_password").value = "";
+    pwdStep = 0;
+  }
+}
+
+function toggleRegister() {
+  const row = document.getElementById("nameRow");
+  const btn = document.getElementById("regBtn");
+  if (regStep === 0) {
+    // 第一次点击：展开姓名栏，让员工先填姓名再确认，避免误点直接注册
+    row.style.display = "";
+    btn.textContent = "确认注册";
+    document.getElementById("name").focus();
+    showMsg("请补填本人姓名后再次点击「确认注册」", true);
+    regStep = 1;
+  } else {
+    doRegister();
+  }
+}
+
 async function doRegister() {
   const emp_id = document.getElementById("emp_id").value.trim();
   const password = document.getElementById("password").value;
+  const name = (document.getElementById("name") || {}).value || "";
   if (!emp_id || !password) return showMsg("请输入工号和密码", false);
-  const res = await post("/api/register", { emp_id, password });
-  showMsg(res.msg || (res.ok ? "注册成功，请登录" : "注册失败"), res.ok);
+  if (password.length < 8) return showMsg("密码至少 8 位", false);
+  if (!name.trim()) return showMsg("请填写本人姓名（与花名表一致）", false);
+  const res = await post("/api/register", { emp_id, password, name: name.trim() });
+  if (res.ok) {
+    showMsg("注册成功，请用刚设置的密码登录", true);
+    document.getElementById("nameRow").style.display = "none";
+    document.getElementById("regBtn").textContent = "注册新账号";
+    regStep = 0;
+  } else {
+    showMsg(res.msg || "注册失败", false);
+  }
 }
 </script>
 </body>

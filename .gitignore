@@ -69,3 +69,20 @@ __pycache__/
 Thumbs.db
 desktop.ini
 ~$*
+
+# ============================================================
+# 2026-09-22 追加：权限隔离/审计/压测相关，含真实人名或运行数据
+# ============================================================
+acl_roster.json
+acl_roster_snapshot.json
+acl_tags_by_source.json
+acl_zero_basis.json
+acl_visibility_report.json
+build_acl_matrix.py
+snapshots/
+_eval_mac_out/
+gen_out.jsonl
+gen_scored.jsonl
+启动数字员工-本地覆盖.bat
+*初始密码*.xlsx
+并发压测报告*.md
